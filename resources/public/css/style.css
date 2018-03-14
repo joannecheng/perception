@@ -1,0 +1,20 @@
+/* some style */
+
+body {
+    font-family: Georgia, Palatino, Andale Mono, serif;
+}
+
+div.section-title {
+    font-size: 16px;
+}
+
+.grid-content {
+    font-spacing: 1em;
+}
+
+/*** VIZ STYLES ***/
+
+line.lengths {
+    stroke-width: 4px;
+    stroke: #9467bd;
+}
