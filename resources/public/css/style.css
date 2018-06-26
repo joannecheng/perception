@@ -14,7 +14,21 @@ div.section-title {
 
 /*** VIZ STYLES ***/
 
+circle.points {
+    fill: #333;
+}
+
 line.lengths {
     stroke-width: 4px;
-    stroke: #9467bd;
+    stroke: #555;
+}
+
+.slope {
+    fill: none;
+    stroke: #666;
+    stroke-width: 3px;
+}
+
+circle.areas {
+    fill: #444;
 }

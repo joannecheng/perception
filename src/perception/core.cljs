@@ -1,11 +1,15 @@
 (ns perception.core
-    (:require [cljsjs.d3]))
+  (:require [cljsjs.d3]
+            [clojure.string :as string]))
 
 (enable-console-print!)
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:data [3 5 13 6 8]}))
+(def max-val 40)
+
+(defonce app-state (atom {:data (take 5 (repeatedly #(rand-int max-val)))}))
+
 (def viz-height 125)
 (def viz-width 150)
 (def margin 10)
@@ -19,6 +23,9 @@
 
 (def colors (js->clj (.-schemeCategory10 js/d3)))
 
+(.. (.select js/d3 "#numbers")
+    (text (str "[" (string/join ", " (:data @app-state)) "]")))
+
 (defn select-svg [class-selector]
   (.. (.select js/d3 (str ".viz-container" class-selector " svg"))
       (attr "height" viz-height)
@@ -27,7 +34,7 @@
 
 (def height-scale
   (.. (.scaleLinear js/d3)
-      (domain (into-array [0 13]))
+      (domain (into-array [0 max-val]))
       (range (into-array [(- viz-height margin) margin]))))
 
 (.. (select-svg ".position")
@@ -53,6 +60,23 @@
     (attr "y1" #(height-scale %)))
 
 
+(def slope-generator
+  (.. (.line js/d3)
+      ("y" #(height-scale %))
+      ("x" (fn [d i] (* (inc i) 25)))))
+
+(.. (select-svg ".slope")
+    (append "path")
+    (datum (into-array (:data @app-state)))
+    (classed "slope" true)
+    (attr "d" slope-generator))
+
+(def circle-scale
+  (.. (.scalePow js/d3)
+      (exponent 0.5)
+      (domain (into-array [0 max-val]))
+      (range (into-array [0 10]))))
+
 (.. (select-svg ".area")
     (selectAll "circle.areas")
     (data (into-array (:data @app-state)))
@@ -62,8 +86,7 @@
     (attr "shape-rendering" "geometricPrecision")
     (attr "cx" (fn [d i] (* (inc i) 25)))
     (attr "cy" (/ viz-height 2))
-    (attr "r" #(/ ( * 3.14 %) 3))
-    (attr "fill" (fn [d i] (nth colors (+ i 3)))))
+    (attr "r" #(circle-scale %)))
 
 
 (defonce pie (.pie js/d3))
@@ -94,9 +117,31 @@
     (data (into-array (:data @app-state)))
     (enter)
     (append "rect")
+    (classed "saturation" true)
     (attr "x" (fn [d i] (* (inc i) 22)))
     (attr "y" (/ viz-height 2))
     (attr "width" 20)
     (attr "height" 20)
     (attr "offset" "10%")
     (attr "fill" #(color-scale-saturation %)))
+
+(def color-scale-hue
+  (.. (.scaleLinear js/d3)
+      (domain (clj->js [0 (apply max (:data @app-state))]))
+      (range (clj->js ["#3182bd" "#f03b20"]))))
+
+(.. (select-svg ".hue")
+    (selectAll "rect.hue")
+    (data (into-array (:data @app-state)))
+    (enter)
+    (append "rect")
+    (classed "hue" true)
+    (attr "x" (fn [d i] (* (inc i) 22)))
+    (attr "y" (/ viz-height 2))
+    (attr "width" 20)
+    (attr "height" 20)
+    (attr "offset" "10%")
+    (attr "fill" #(color-scale-hue %)))
+
+;; TODO
+;; - volume
